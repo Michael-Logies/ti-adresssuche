@@ -1,0 +1,12 @@
+# Konfiguration mit den ECHTEN Zugangsdaten bleibt lokal!
+config.ini
+# Zertifikate und Schlüssel kommen niemals ins Repository
+*.crt
+*.key
+*.p12
+*.pfx
+# Python-Läufe
+__pycache__/
+*.pyc
+# Logs und Tests
+*.log

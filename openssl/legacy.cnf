@@ -1,0 +1,14 @@
+# OpenSSL-Konfiguration zur Umwandlung älterer PKCS#12-Dateien:
+# Konlan-Client-Zertifikate aus Konnektor-Exporten sind häufig mit dem
+# veralteten RC2-40-Algorithmus verschlüsselt, den OpenSSL 3 ohne den
+# Legacy-Provider nicht mehr liest. Einsatz siehe README, Abschnitt Zertifikat.
+openssl_conf = openssl_init
+[openssl_init]
+providers = provider_sect
+[provider_sect]
+default = default_sect
+legacy = legacy_sect
+[default_sect]
+activate = 1
+[legacy_sect]
+activate = 1
