@@ -81,6 +81,12 @@ FELDER = [("Name", "displayName"), ("Ort", "localityName"), ("PLZ", "postalCode"
           ("Straße", "streetAddress"), ("Bundesland", "stateOrProvinceName"),
           ("Organisation", "organization")]
 
+# Bei der All-Attribute-Abfrage antwortet der VZD mit den kanonischen
+# Attributnamen (l, street, st, o) statt der Alias-Namen — normalisieren,
+# damit die Anzeige-Spalten wieder greifen.
+ATTR_ALIASES = {"l": "localityName", "street": "streetAddress",
+                "st": "stateOrProvinceName", "o": "organization"}
+
 
 # ---------- Mini-BER-Encode ----------
 
@@ -258,6 +264,7 @@ class LdapVerbindung:
                             pa = op[a_start:a_end]  # Inhalt: type-TLV + SET-OF-Werte
                             _tt, t_start, t_end, t_next = tlv_at(pa, 0)
                             name_attr = pa[t_start:t_end].decode("utf-8")
+                            name_attr = ATTR_ALIASES.get(name_attr.strip().lower(), name_attr)
                             _tv, v_start, v_end, _nextv = tlv_at(pa, t_next)
                             vals = []
                             q = v_start

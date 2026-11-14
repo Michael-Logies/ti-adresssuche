@@ -79,6 +79,12 @@ FELDER = [
     ("Organisation", "organization"),
 ]
 
+# Bei der All-Attribute-Abfrage antwortet der VZD mit den kanonischen
+# Attributnamen (l, street, st, o) statt der Alias-Namen — normalisieren,
+# damit die Anzeige-Spalten wieder greifen.
+ATTR_ALIASES = {"l": "localityName", "street": "streetAddress",
+                "st": "stateOrProvinceName", "o": "organization"}
+
 
 def baue_filter(werte, oid_liste, facetten):
     teile = []
@@ -164,6 +170,7 @@ def parse_ldif(ldif):
             continue
         name, rest = zeile.split(":", 1)
         name = name.strip()
+        name = ATTR_ALIASES.get(name.lower(), name)
         if rest.startswith(":"):
             try:
                 val = base64.b64decode(rest[1:].strip()).decode("utf-8")
