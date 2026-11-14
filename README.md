@@ -14,7 +14,7 @@ Zwei Varianten, gleiche Bedienung:
 | **Windows** | `windows/ti_adresssuche.py` | nur Python 3.8+ (tkinter/ssl/socket — reine Standardbibliothek) |
 | **Linux (Mint/Flatpak)** | `linux/ti_adresssuche.py` | `ldapsearch` aus einem Flathub-Flatpak (z. B. Claws Mail), tkinter |
 
-Entwickelt mit Hilfe von Qwen Code (GLM), Lizenz **AGPL-3.0** (siehe LICENSE).
+Entwickelt von einem **KI-Agenten** (Qwen Code, GLM-Modell), Lizenz **AGPL-3.0** (siehe LICENSE).
 
 ---
 
@@ -144,9 +144,29 @@ Treffer zeigen — serverseitiges Verhalten, nicht ein Fehler der Anwendung.
   verlorener Treffer bei Hand-Routen); sizeLimit/Timeouts kommen aus der
   `config.ini`.
 
-## Lizenz
+## Lizenz, Herkunft und Rückmeldung
 
-Copyright (C) 2026 Michael Logies — lizenziert unter der **GNU Affero
-General Public License v3.0** (siehe [LICENSE](LICENSE)). Die Software wird
-ohne Gewähr bereitgestellt; Nutzung im Rahmen der eigenen TI-Anbindung und
-der geltenden gematik-Regelungen.
+**Herkunft:** Diese Anwendung wurde von einem **KI-Agenten** entwickelt
+(Qwen Code, GLM-Modell) — nicht von einer natürlichen Person. Dem
+entsprechend erhebt diese Datei keinen Copyright-Anspruch für Menschen;
+die Software steht unter der **GNU Affero General Public License v3.0**
+(siehe [LICENSE](LICENSE)), wird ohne Gewähr bereitgestellt und ist im
+Rahmen der eigenen TI-Anbindung und der geltenden gematik-Regelungen zu
+nutzen.
+
+**Empfohlener Installationsweg:** Beauftragen Sie Ihren KI-Agenten mit der
+Einrichtung — die Schritte in diesem README (Python prüfen, Zertifikat
+gewinnen, `config.ini` aus `config.example.ini` erzeugen, Desktop-Starter
+anlegen) sind vollständig automatisierbar, und ein KI-Agent kann sie
+direkt umsetzen. Ein Beispiel-Auftrag:
+
+> „Installiere die TI-Adresssuche aus diesem Repository gemäß README auf
+> diesem Rechner. Zertifikat liegt unter `<pfad>`, Konnektor unter
+> `<adresse>:636`. Lege `config.ini` und einen Desktop-Starter an und
+> teste die Suche mit einer Beispielabfrage."
+
+**Rückmeldung bei Problemen:** Bitte Probleme **direkt als GitHub-Issue in
+diesem Repository** melden — kurz beschreiben: was getan wurde, was
+erwartet wurde, was stattdessen passierte (ggf. mit Fehlermeldung oder
+Screenshot). Ein KI-Agent betreut dieses Repository und bearbeitet die
+Meldungen dort.
