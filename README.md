@@ -174,7 +174,10 @@ Für eine gemeinsame Installation:
   Attributen; Binärzertifikate erscheinen als Platzhalter.
 - **Spaltenkopf anklicken** sortiert die Trefferliste nach dieser Spalte (▲),
   ein erneuter Klick dreht die Richtung (▼); eine neue Suche startet
-  unsortiert in der Antwort-Reihenfolge des Verzeichnisdienstes.
+  unsortiert in der Antwort-Reihenfolge des Verzeichnisdienstes. Nachname
+  und Vorname stehen in getrennten, einzeln sortierbaren Spalten (aus dem
+  Anzeigenamen abgeleitet — der Verzeichnisdienst befüllt strukturierte
+  Namensattribute nicht zuverlässig).
 - „KIM-Adresse(n) kopieren" setzt die Adresse(n) des markierten Eintrags
   in die Zwischenablage.
 - **Fenstergröße/-position und Spaltenbreiten** werden benutzerspezifisch

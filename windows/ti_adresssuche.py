@@ -17,9 +17,11 @@ Suchlogik: echte Teilstring-Suche (LDAP SubstringFilter any-Komponente).
 Der VZD wertet any= voll aus (auch Umlaute); die Mischung initial+any in
 einem Filter liefert 0 und wird daher nicht verwendet.
 
-Version 1.2 (14.11.2026) — Trefferliste sortierbar (Klick auf den
-Spaltenkopf sortiert, erneuter Klick dreht die Richtung); Fenstergröße/
--position und Spaltenbreiten werden benutzerspezifisch gemerkt (je Konto:
+Version 1.3 (14.11.2026) — Trefferliste mit getrennten Spalten Nachname und
+Vorname (aus dem Anzeigenamen abgeleitet; der VZD befüllt sn/givenName
+nicht strukturiert), beide wie alle Spalten per Spaltenkopf-Klick
+sortierbar (erneuter Klick dreht die Richtung); Fenstergröße/-position und
+Spaltenbreiten werden benutzerspezifisch gemerkt (je Konto:
 %APPDATA%\TI-Adresssuche\fenster.json).
 """
 import configparser
@@ -304,14 +306,27 @@ def mails_von(attrs):
     return []
 
 
+def namen_von(t):
+    """(Nachname, Vorname) aus dem Anzeigenamen — der VZD befüllt
+    sn/givenName nicht strukturiert (sn = ganzer Name, givenName = '-')."""
+    anzeige = (hole(t, "displayName") or "").strip()
+    if not anzeige:
+        return "", ""
+    if "," in anzeige:  # Schreibweise „Nachname, Vorname"
+        nach, vor = anzeige.split(",", 1)
+        return nach.strip(), vor.strip()
+    teile = anzeige.rsplit(" ", 1)
+    return (teile[1], teile[0]) if len(teile) == 2 else (anzeige, "")
+
+
 # ---------- Fensterzustand (benutzerspezifisch) -----------------------------
 # Fenstergröße/-position und Spaltenbreiten der Trefferliste werden je
 # Benutzerkonto gemerkt (Windows: %APPDATA%\TI-Adresssuche\fenster.json,
 # Linux: ~/.config/ti-adresssuche/fenster.json). Die Installation selbst darf
 # geteilt liegen (z. B. C:\ProgramData) — der Zustand ist bewusst kontenlokal.
 
-SPALTEN_BREITEN_DEFAULT = {"name": 180, "org": 150, "ort": 90, "plz": 50,
-                           "str": 140, "mail": 230}
+SPALTEN_BREITEN_DEFAULT = {"nachname": 140, "vorname": 130, "org": 150,
+                           "ort": 90, "plz": 50, "str": 140, "mail": 230}
 
 
 def _zustand_datei():
@@ -370,13 +385,15 @@ def main_gui():
     ttk.Label(kopf, text="OID:").grid(row=2, column=2, sticky="e", padx=4)
     oid = ttk.Entry(kopf, width=28)
     oid.grid(row=2, column=3, sticky="w", padx=2)
-    spalten = ("name", "org", "ort", "plz", "str", "mail")
-    kopftext = ("Name", "Organisation", "Ort", "PLZ", "Straße", "KIM-Adresse(n)")
+    spalten = ("nachname", "vorname", "org", "ort", "plz", "str", "mail")
+    kopftext = ("Nachname", "Vorname", "Organisation", "Ort", "PLZ", "Straße",
+                "KIM-Adresse(n)")
     baum = ttk.Treeview(root, columns=spalten, show="headings")
     sort_richtung = {}  # Spalte -> Richtung des NÄCHSTEN Klicks (False = aufsteigend)
 
     def zeile_von(t):
-        return (hole(t, "displayName"), hole(t, "organization"),
+        nachname, vorname = namen_von(t)
+        return (nachname, vorname, hole(t, "organization"),
                 hole(t, "localityName"), hole(t, "postalCode"),
                 hole(t, "streetAddress"), "; ".join(mails_von(t)))
 
