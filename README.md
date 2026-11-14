@@ -164,6 +164,10 @@ Für eine gemeinsame Installation:
 
 ## Bedienung
 
+- Das Menü **Hilfe** (Menüleiste der Anwendung, oben) erklärt
+  alle Funktionen in einem Fenster und verweist auf die Seite mit der
+  jeweils aktuellen Version (<https://www.logies.de/ti-adresssuche.html>)
+  sowie auf den Quelltext (GitHub); die Versionsnummer steht direkt im Menü.
 - Suchfelder: Name, Ort, PLZ, Straße, Bundesland, Organisation — **echte
   Teilstring-Suche** („Logies" findet auch „Michael Logies"), Kombination
   der Felder per UND.

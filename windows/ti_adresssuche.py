@@ -17,12 +17,13 @@ Suchlogik: echte Teilstring-Suche (LDAP SubstringFilter any-Komponente).
 Der VZD wertet any= voll aus (auch Umlaute); die Mischung initial+any in
 einem Filter liefert 0 und wird daher nicht verwendet.
 
-Version 1.4 (14.11.2026) — Doktor-/Professoren-Titel werden vereinheitlicht
-an das ENDE des Vornamen-Feldes gestellt, in der Reihenfolge Prof. vor
-Dr., mehrfache Dr. direkt hintereinander (egal, wo das VZD sie platziert);
-getrennte Spalten Nachname/Vorname, alle Spalten per Spaltenkopf-Klick
-sortierbar; Fenstergröße/-position und Spaltenbreiten werden
-benutzerspezifisch gemerkt (je Konto: %APPDATA%\TI-Adresssuche\fenster.json).
+Version 1.5 (14.11.2026) — Menü „Hilfe": Fenster mit Erklärung aller
+Funktionen, klickbarer Link auf die Seite mit der jeweils aktuellen
+Version (https://www.logies.de/ti-adresssuche.html) und auf den Quelltext
+(GitHub); die Versionsnummer steht direkt im Menü. Bis dahin: Titel-
+Vereinheitlichung im Vornamen-Feld (1.4), getrennte Spalten
+Nachname/Vorname (1.3), Spaltenkopf-Sortierung (1.2), benutzerspezifisch
+gemerktes Fensterlayout (1.1, %APPDATA%\TI-Adresssuche\fenster.json).
 """
 import configparser
 import json
@@ -32,6 +33,7 @@ import ssl
 import socket
 import sys
 import tkinter as tk
+import webbrowser
 from tkinter import ttk
 
 SKRIPTPFAD = os.path.dirname(os.path.abspath(__file__))
@@ -406,6 +408,81 @@ def speichere_fensterzustand(daten):
         pass  # Zustand ist Komfort — niemals die Anwendung blockieren
 
 
+# ---------- Hilfe-Dialog (Menü „Hilfe") --------------------------------------
+
+VERSION = "1.5"
+WEBSEITE = "https://www.logies.de/ti-adresssuche.html"
+REPO = "https://github.com/Michael-Logies/ti-adresssuche"
+
+HILFE_TEXT = """Zweck
+
+Diese Anwendung durchsucht den TI-Verzeichnisdienst (VZD) — das zentrale
+Adressverzeichnis der Telematikinfrastruktur (TI) — nach KIM-Adressen.
+KIM ist der E-Mail-Standard der TI im Gesundheitswesen. Voraussetzung ist
+eine eigene TI-Anbindung (Konnektor bzw. virtueller Konnektor) mit eigenem
+TLS-Client-Zertifikat. Die Suche ist rein lesend; die Anwendung speichert
+keine Daten.
+
+Suchen
+
+• Die Suchfelder (Name, Ort, PLZ, Straße, Bundesland, Organisation) sind
+  echte Teilstring-Suchen: „Logies" findet auch „Michael Logies". Mehrere
+  gefüllte Felder werden mit UND kombiniert — je weniger Felder, desto
+  mehr Treffer.
+• Die Fachrichtung-Auswahl (Zahnarztpraxis, KFO, MKG, Arzt-Fachgruppen,
+  Psychotherapie, Krankenhaus, Apotheke) schränkt gezielt ein. „Alle
+  Fachrichtungen" sucht branchenübergreifend — nicht jeder Eintrag trägt
+  eine Fachrichtung ein. Besondere Fälle über das Feld „OID" (die
+  professionOID gemäß gemSpec_VZD, z. B. für weitere Fachgruppen).
+• Der Knopf „Suchen" fragt den Verzeichnisdienst ab und füllt die
+  Trefferliste.
+
+Trefferliste
+
+• Klick auf einen Spaltenkopf sortiert aufsteigend, nochmaliger Klick
+  dreht die Richtung (▲/▼). Eine neue Suche startet wieder unsortiert.
+• Nachname und Vorname stehen in getrennten Spalten (aus dem Anzeigenamen
+  abgeleitet). Doktor-/Professoren-Titel stehen einheitlich am Ende des
+  Vornamen-Feldes — Prof. vor Dr., mehrfache Dr. direkt hintereinander
+  (z. B. „Hans Maier, Prof. Dr. Dr. med.").
+• Doppelklick auf einen Treffer zeigt ALLE Verzeichnis-Attribute des
+  Eintrags (einschließlich telematikID, kimData, Eintragstyp).
+• „KIM-Adresse(n) des Eintrags kopieren" setzt die Adresse(n) des
+  markierten Eintrags in die Zwischenablage (mehrere: Semikolon-getrennt).
+
+Komfort
+
+• Fenstergröße/-position und Spaltenbreiten werden beim Schließen
+  benutzerspezifisch gemerkt und beim nächsten Start wiederhergestellt —
+  auch bei geteilter Installation (z. B. Terminalserver).
+"""
+
+
+def zeige_hilfe(eltern):
+    fenster = tk.Toplevel(eltern)
+    fenster.title("Hilfe — TI-Adresssuche (Version %s)" % VERSION)
+    fenster.geometry("680x560")
+    txt = tk.Text(fenster, wrap="word", padx=10, pady=8)
+    sbv = ttk.Scrollbar(fenster, orient="vertical", command=txt.yview)
+    txt.configure(yscrollcommand=sbv.set)
+    sbv.pack(side="right", fill="y")
+    txt.pack(fill="both", expand=True)
+    txt.insert("1.0", HILFE_TEXT)
+    txt.configure(state="disabled")
+    links = ttk.Frame(fenster)
+    links.pack(fill="x", padx=10, pady=6)
+    for beschriftung, url in (
+            ("Aktuelle Version, Anleitung, Änderungsprotokoll:", WEBSEITE),
+            ("Quelltext und Rückmeldung (GitHub-Issues):", REPO)):
+        zeile = ttk.Frame(links)
+        zeile.pack(fill="x", pady=2)
+        ttk.Label(zeile, text=beschriftung + " ").pack(side="left")
+        ziel = tk.Label(zeile, text=url, fg="#1a56a0", underline=True,
+                        cursor="hand2")
+        ziel.pack(side="left")
+        ziel.bind("<Button-1>", lambda _e, u=url: webbrowser.open(u))
+
+
 # ---------- GUI ----------
 
 def main_gui():
@@ -418,6 +495,18 @@ def main_gui():
     root = tk.Tk()
     root.title("TI-Adresssuche (KIM-Verzeichnis)")
     root.geometry("1000x560")
+    menue = tk.Menu(root, tearoff=0)
+    m_hilfe = tk.Menu(menue, tearoff=0)
+    m_hilfe.add_command(label="Funktionen …", command=lambda: zeige_hilfe(root))
+    m_hilfe.add_separator()
+    m_hilfe.add_command(label="Aktuelle Version herunterladen …",
+                        command=lambda: webbrowser.open(WEBSEITE))
+    m_hilfe.add_command(label="Quelltext (GitHub) …",
+                        command=lambda: webbrowser.open(REPO))
+    m_hilfe.add_separator()
+    m_hilfe.add_command(label="Version %s" % VERSION, state="disabled")
+    menue.add_cascade(label="Hilfe", menu=m_hilfe)
+    root.config(menu=menue)
     kopf = ttk.Frame(root)
     kopf.pack(fill="x", padx=8, pady=6)
     felder = {}
