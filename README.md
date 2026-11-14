@@ -110,6 +110,46 @@ limit = 60
 
 ---
 
+## Terminalserver / Mehrbenutzer (Windows)
+
+Wird die Anwendung von **mehreren Benutzerkonten** gemeinsam genutzt
+(Terminalserver, Praxis-PC mit Wechselkonten), genügt eine Installation im
+Profil eines einzelnen Benutzers nicht: Andere Konten haben auf
+`C:\Users\<name>` keinen Zugriff, und ein benutzerbezogenes Python (z. B.
+Microsoft-Store-Python) ist in deren Konten nicht vorhanden.
+
+Für eine gemeinsame Installation:
+
+1. **Python maschinenweit** bereitstellen — entweder den
+   [python.org](https://www.python.org/downloads/)-Installer mit „für alle
+   Benutzer" installieren oder eine portable CPython-Laufzeit in einen
+   Ordner legen, den alle Konten lesen können. Mit dem Werkzeug
+   [`uv`](https://docs.astral.sh/uv/) genügt:
+   ```bat
+   set UV_PYTHON_INSTALL_DIR=C:\ProgramData\ti-adresssuche\runtime
+   uv python install 3.10
+   ```
+2. **Anwendung nach `C:\ProgramData\ti-adresssuche`** legen:
+   `scripts\ti_adresssuche.py` (aus `windows/`), `scripts\config.ini`
+   (aus `config.example.ini` erzeugen) und das TLS-Client-Zertifikat nach
+   `tls\`. Eine zentrale `config.ini` gilt für alle Benutzer — Pfadangaben
+   entsprechend eintragen.
+3. **Rechte setzen** — alle Benutzer brauchen Lesen/Ausführen auf dem
+   Ordner, z. B.:
+   ```bat
+   icacls C:\ProgramData\ti-adresssuche /grant *S-1-5-32-545:(OI)(CI)(RX)
+   ```
+   (`*S-1-5-32-545` = eingebaute Gruppe „Benutzer".) **Bewusste
+   Entscheidung:** Damit können alle Konten auch den privaten Schlüssel
+   (`tls\client.key`) lesen — er authentifiziert die Praxis gegenüber dem
+   Verzeichnisdienst (reine Lese-Suche). Enger fassen: statt der
+   Benutzer-Gruppe nur eine eigene Praxis-Benutzergruppe granten.
+4. **Verknüpfung für alle** in `C:\Users\Public\Desktop` anlegen (erscheint
+   bei jedem Konto auf dem Desktop) — Ziel `<runtime>\pythonw.exe`, als
+   Argument das Skript, als Arbeitsordner `scripts` (kein Konsolenfenster).
+
+---
+
 ## Start
 
 - **Windows:** Python 3.8+ installiert → Doppelklick auf
