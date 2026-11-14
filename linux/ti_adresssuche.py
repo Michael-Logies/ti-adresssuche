@@ -15,8 +15,9 @@ Alle Verbindungsdaten stehen in config.ini (vorher aus config.example.ini
 erzeugen). Diese Datei enthält KEINE Zugangsdaten — das Zertifikat bleibt
 ausschließlich auf dem eigenen Rechner.
 
-Version 1.1 (14.11.2026) — Fenstergröße/-position und Spaltenbreiten der
-Trefferliste werden benutzerspezifisch gemerkt (je Konto:
+Version 1.2 (14.11.2026) — Trefferliste sortierbar (Klick auf den
+Spaltenkopf sortiert, erneuter Klick dreht die Richtung); Fenstergröße/
+-position und Spaltenbreiten werden benutzerspezifisch gemerkt (je Konto:
 ~/.config/ti-adresssuche/fenster.json).
 """
 import base64
@@ -274,9 +275,11 @@ class Suche(tk.Tk):
         self.status = ttk.Label(kopf, text=""); self.status.grid(row=2, column=5)
         spalten = ("name", "org", "ort", "plz", "str", "mail")
         kopftext = ("Name", "Organisation", "Ort", "PLZ", "Straße", "KIM-Adresse(n)")
+        self.spalten, self.kopftext = spalten, kopftext
+        self.sort_richtung = {}  # Spalte -> Richtung des NÄCHSTEN Klicks (False = aufsteigend)
         self.baum = ttk.Treeview(self, columns=spalten, show="headings")
         for s, k in zip(spalten, kopftext):
-            self.baum.heading(s, text=k)
+            self.baum.heading(s, text=k, command=lambda c=s: self.sortiere(c))
         for s, w in SPALTEN_BREITEN_DEFAULT.items():
             self.baum.column(s, width=w)
         zustand = lade_fensterzustand()
@@ -314,6 +317,26 @@ class Suche(tk.Tk):
             pass
         self.destroy()
 
+    def zeile_von(self, e):
+        return (hole(e, "displayName") or hole(e, "cn"), hole(e, "organization"),
+                hole(e, "localityName"), hole(e, "postalCode"),
+                hole(e, "streetAddress"), "; ".join(mails_von(e)))
+
+    def sortiere(self, s):
+        if not self.treffer:
+            return
+        idx = self.spalten.index(s)
+        absteigend = self.sort_richtung.get(s, False)
+        self.treffer.sort(key=lambda e: (self.zeile_von(e)[idx] or "").casefold(),
+                          reverse=absteigend)
+        self.sort_richtung[s] = not absteigend
+        for sp, k in zip(self.spalten, self.kopftext):
+            mark = (" ▼" if absteigend else " ▲") if sp == s else ""
+            self.baum.heading(sp, text=k + mark)
+        self.baum.delete(*self.baum.get_children())
+        for e in self.treffer:
+            self.baum.insert("", "end", values=self.zeile_von(e))
+
     def suche(self):
         name, wert = self.fach.get(), self.oid.get().strip()
         oid_liste, facetten = [], []
@@ -332,11 +355,11 @@ class Suche(tk.Tk):
         self.baum.delete(*self.baum.get_children())
         self.treffer = []
         for e in eintraege:
-            zeile = (hole(e, "displayName") or hole(e, "cn"), hole(e, "organization"),
-                     hole(e, "localityName"), hole(e, "postalCode"),
-                     hole(e, "streetAddress"), "; ".join(mails_von(e)))
-            self.baum.insert("", "end", values=zeile)
+            self.baum.insert("", "end", values=self.zeile_von(e))
             self.treffer.append(e)
+        self.sort_richtung.clear()
+        for sp, k in zip(self.spalten, self.kopftext):
+            self.baum.heading(sp, text=k)
         if eintraege:
             self.status.config(text="%d Treffer" % len(eintraege))
         else:

@@ -172,6 +172,9 @@ Für eine gemeinsame Installation:
   branchenübergreifende Suche (nicht jeder Eintrag trägt eine Facette ein).
 - **Doppelklick** auf einen Treffer → Detail-Fenster mit allen Verzeichnis-
   Attributen; Binärzertifikate erscheinen als Platzhalter.
+- **Spaltenkopf anklicken** sortiert die Trefferliste nach dieser Spalte (▲),
+  ein erneuter Klick dreht die Richtung (▼); eine neue Suche startet
+  unsortiert in der Antwort-Reihenfolge des Verzeichnisdienstes.
 - „KIM-Adresse(n) kopieren" setzt die Adresse(n) des markierten Eintrags
   in die Zwischenablage.
 - **Fenstergröße/-position und Spaltenbreiten** werden benutzerspezifisch

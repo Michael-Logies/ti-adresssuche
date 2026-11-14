@@ -17,8 +17,9 @@ Suchlogik: echte Teilstring-Suche (LDAP SubstringFilter any-Komponente).
 Der VZD wertet any= voll aus (auch Umlaute); die Mischung initial+any in
 einem Filter liefert 0 und wird daher nicht verwendet.
 
-Version 1.1 (14.11.2026) — Fenstergröße/-position und Spaltenbreiten der
-Trefferliste werden benutzerspezifisch gemerkt (je Konto:
+Version 1.2 (14.11.2026) — Trefferliste sortierbar (Klick auf den
+Spaltenkopf sortiert, erneuter Klick dreht die Richtung); Fenstergröße/
+-position und Spaltenbreiten werden benutzerspezifisch gemerkt (je Konto:
 %APPDATA%\TI-Adresssuche\fenster.json).
 """
 import configparser
@@ -372,8 +373,30 @@ def main_gui():
     spalten = ("name", "org", "ort", "plz", "str", "mail")
     kopftext = ("Name", "Organisation", "Ort", "PLZ", "Straße", "KIM-Adresse(n)")
     baum = ttk.Treeview(root, columns=spalten, show="headings")
+    sort_richtung = {}  # Spalte -> Richtung des NÄCHSTEN Klicks (False = aufsteigend)
+
+    def zeile_von(t):
+        return (hole(t, "displayName"), hole(t, "organization"),
+                hole(t, "localityName"), hole(t, "postalCode"),
+                hole(t, "streetAddress"), "; ".join(mails_von(t)))
+
+    def sortiere(s):
+        if not treffer:
+            return
+        idx = spalten.index(s)
+        absteigend = sort_richtung.get(s, False)
+        treffer.sort(key=lambda t: (zeile_von(t)[idx] or "").casefold(),
+                     reverse=absteigend)
+        sort_richtung[s] = not absteigend
+        for sp, k in zip(spalten, kopftext):
+            mark = (" ▼" if absteigend else " ▲") if sp == s else ""
+            baum.heading(sp, text=k + mark)
+        baum.delete(*baum.get_children())
+        for t in treffer:
+            baum.insert("", "end", values=zeile_von(t))
+
     for s, k in zip(spalten, kopftext):
-        baum.heading(s, text=k)
+        baum.heading(s, text=k, command=lambda c=s: sortiere(c))
     for s, w in SPALTEN_BREITEN_DEFAULT.items():
         baum.column(s, width=w)
     zustand = lade_fensterzustand()
@@ -431,9 +454,10 @@ def main_gui():
             return
         baum.delete(*baum.get_children())
         for t in treffer:
-            baum.insert("", "end", values=(hole(t, "displayName"), hole(t, "organization"),
-                                           hole(t, "localityName"), hole(t, "postalCode"),
-                                           hole(t, "streetAddress"), "; ".join(mails_von(t))))
+            baum.insert("", "end", values=zeile_von(t))
+        sort_richtung.clear()
+        for sp, k in zip(spalten, kopftext):
+            baum.heading(sp, text=k)
         if treffer:
             status.config(text="%d Treffer" % len(treffer))
         else:
