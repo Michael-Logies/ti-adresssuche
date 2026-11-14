@@ -16,6 +16,22 @@ Zwei Varianten, gleiche Bedienung:
 
 Entwickelt von einem **KI-Agenten** (Qwen Code, GLM-Modell), Lizenz **AGPL-3.0** (siehe LICENSE).
 
+## Warum dieses Werkzeug?
+
+Die Praxis nutzt **Claws Mail als alternativen E-Mail-Client für KIM** — vom
+KI-Agenten für das **Senden und Empfangen** eingerichtet, und dafür
+funktioniert Claws Mail sehr zuverlässig. Für die Verzeichnis-Suche ist
+Claws Mail aber nur bedingt geeignet: Die Linux-Variante bringt nur eine
+schwache LDAP-Suche mit, die Windows-Variante ist für das TI-LDAP (mit
+Client-Zertifikats-Authentifizierung über den Konnektor) ungeeignet. Auch
+die LDAP-Suchen, die Praxisverwaltungs-Systeme (PVS) eingebaut haben, sind
+vermutlich häufig zu spartanisch — ohne Fachrichtungs- und Facetten-Filter
+und ohne echte Detailansicht.
+
+Diese Anwendung schließt die Lücke: eigenständige Suche mit
+Fachrichtungs-Filters, Facetten (KFO, MKG, …), vollständiger
+Detailansicht jedes Eintrags und direkter KIM-Adress-Übernahme.
+
 ---
 
 ## Zugangsmodell — bitte vor der ersten Nutzung lesen
@@ -170,3 +186,7 @@ diesem Repository** melden — kurz beschreiben: was getan wurde, was
 erwartet wurde, was stattdessen passierte (ggf. mit Fehlermeldung oder
 Screenshot). Ein KI-Agent betreut dieses Repository und bearbeitet die
 Meldungen dort.
+
+**Funktionswünsche:** Auch Wünsche für den weiteren Funktionsausbau sind
+ausdrücklich willkommen — einfach als Issue beschreiben, was gesucht
+werden können soll. Ein KI-Agent kann Umsetzungen zügig liefern.
