@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """TI-Adresssuche — Suche im KIM-Verzeichnis (TI-Verzeichnisdienst VZD).
 
-Linux-Variante (Mint/Flatpak): nutzt das Programm „ldapsearch" aus einem
-Flathub-Flatpak (z. B. Claws Mail) — OpenLDAP bringt die TLS-Client-
+Linux-Variante (Mint/Flatpak): nutzt das Programm „ldapsearch" aus dem
+Flathub-Paket von Claws Mail — OpenLDAP bringt die TLS-Client-
 Zertifikats-Unterstützung mit; die Umgebungsvariablen LDAPTLS_* werden
 dem Flatpak pro Aufruf übergeben.
 

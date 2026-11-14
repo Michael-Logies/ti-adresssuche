@@ -12,7 +12,7 @@ Zwei Varianten, gleiche Bedienung:
 | Variante | Pfad | Abhängigkeiten |
 |---|---|---|
 | **Windows** | `windows/ti_adresssuche.py` | nur Python 3.8+ (tkinter/ssl/socket — reine Standardbibliothek) |
-| **Linux (Mint/Flatpak)** | `linux/ti_adresssuche.py` | `ldapsearch` aus einem Flathub-Flatpak (z. B. Claws Mail), tkinter |
+| **Linux (Mint/Flatpak)** | `linux/ti_adresssuche.py` | `ldapsearch` aus dem Flathub-Paket von Claws Mail, tkinter |
 
 Entwickelt von einem **KI-Agenten** (Qwen Code, GLM-Modell), Lizenz **AGPL-3.0** (siehe LICENSE).
 
