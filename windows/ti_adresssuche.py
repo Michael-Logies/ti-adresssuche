@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""TI-Adresssuche — Suche im KIM-Verzeichnis (TI-Verzeichnisdienst VZD).
+r"""TI-Adresssuche — Suche im KIM-Verzeichnis (TI-Verzeichnisdienst VZD).
 
 Windows-Variante: reine Python-Standardbibliothek (tkinter/ssl/socket) mit
 eigenem Mini-BER-LDAP-Client — keine Paketinstallation nötig.
@@ -17,10 +17,14 @@ Suchlogik: echte Teilstring-Suche (LDAP SubstringFilter any-Komponente).
 Der VZD wertet any= voll aus (auch Umlaute); die Mischung initial+any in
 einem Filter liefert 0 und wird daher nicht verwendet.
 
-Version 1.0 (14.11.2026)
+Version 1.1 (14.11.2026) — Fenstergröße/-position und Spaltenbreiten der
+Trefferliste werden benutzerspezifisch gemerkt (je Konto:
+%APPDATA%\TI-Adresssuche\fenster.json).
 """
 import configparser
+import json
 import os
+import re
 import ssl
 import socket
 import sys
@@ -299,6 +303,45 @@ def mails_von(attrs):
     return []
 
 
+# ---------- Fensterzustand (benutzerspezifisch) -----------------------------
+# Fenstergröße/-position und Spaltenbreiten der Trefferliste werden je
+# Benutzerkonto gemerkt (Windows: %APPDATA%\TI-Adresssuche\fenster.json,
+# Linux: ~/.config/ti-adresssuche/fenster.json). Die Installation selbst darf
+# geteilt liegen (z. B. C:\ProgramData) — der Zustand ist bewusst kontenlokal.
+
+SPALTEN_BREITEN_DEFAULT = {"name": 180, "org": 150, "ort": 90, "plz": 50,
+                           "str": 140, "mail": 230}
+
+
+def _zustand_datei():
+    if os.name == "nt":
+        basis = os.environ.get("APPDATA") or os.path.expanduser("~")
+        return os.path.join(basis, "TI-Adresssuche", "fenster.json")
+    basis = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(basis, "ti-adresssuche", "fenster.json")
+
+
+def lade_fensterzustand():
+    try:
+        with open(_zustand_datei(), "r", encoding="utf-8") as f:
+            daten = json.load(f)
+        return daten if isinstance(daten, dict) else None
+    except Exception:
+        return None
+
+
+def speichere_fensterzustand(daten):
+    try:
+        pfad = _zustand_datei()
+        os.makedirs(os.path.dirname(pfad), exist_ok=True)
+        tmp = pfad + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(daten, f)
+        os.replace(tmp, pfad)
+    except Exception:
+        pass  # Zustand ist Komfort — niemals die Anwendung blockieren
+
+
 # ---------- GUI ----------
 
 def main_gui():
@@ -331,9 +374,19 @@ def main_gui():
     baum = ttk.Treeview(root, columns=spalten, show="headings")
     for s, k in zip(spalten, kopftext):
         baum.heading(s, text=k)
-    baum.column("name", width=180); baum.column("org", width=150)
-    baum.column("ort", width=90); baum.column("plz", width=50)
-    baum.column("str", width=140); baum.column("mail", width=230)
+    for s, w in SPALTEN_BREITEN_DEFAULT.items():
+        baum.column(s, width=w)
+    zustand = lade_fensterzustand()
+    if isinstance(zustand, dict):
+        geo = zustand.get("fenster")
+        if isinstance(geo, str) and re.match(r"^\d+x\d+[+-]\d+[+-]\d+$", geo):
+            root.geometry(geo)
+        breiten = zustand.get("spalten")
+        if isinstance(breiten, dict):
+            for s in spalten:
+                w = breiten.get(s)
+                if isinstance(w, int) and w > 20:
+                    baum.column(s, width=w)
     baum.pack(fill="both", expand=True, padx=8, pady=4)
     status = ttk.Label(root, text="Verbinde …")
     status.pack(fill="x", padx=8)
@@ -427,6 +480,18 @@ def main_gui():
     baum.bind("<Double-1>", detail)
     ttk.Button(root, text="KIM-Adresse(n) des Eintrags kopieren", command=kopiere).pack(padx=8, pady=2)
     ttk.Label(root, text="Doppelklick auf einen Treffer zeigt alle LDAP-Infos des Eintrags").pack(padx=8)
+
+    def beende():
+        try:
+            speichere_fensterzustand({
+                "fenster": root.geometry(),
+                "spalten": {s: baum.column(s, "width") for s in spalten},
+            })
+        except Exception:
+            pass
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", beende)
     root.mainloop()
 
 

@@ -174,6 +174,11 @@ Für eine gemeinsame Installation:
   Attributen; Binärzertifikate erscheinen als Platzhalter.
 - „KIM-Adresse(n) kopieren" setzt die Adresse(n) des markierten Eintrags
   in die Zwischenablage.
+- **Fenstergröße/-position und Spaltenbreiten** werden benutzerspezifisch
+  gemerkt (beim Schließen gespeichert, beim Start wiederhergestellt):
+  Windows `%APPDATA%\TI-Adresssuche\fenster.json`, Linux
+  `~/.config/ti-adresssuche/fenster.json` — je Benutzerkonto, auch bei
+  geteilter Installation (z. B. Terminalserver mit `C:\ProgramData`).
 
 ## Fehlerbilder
 

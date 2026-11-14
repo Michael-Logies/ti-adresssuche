@@ -15,11 +15,15 @@ Alle Verbindungsdaten stehen in config.ini (vorher aus config.example.ini
 erzeugen). Diese Datei enthält KEINE Zugangsdaten — das Zertifikat bleibt
 ausschließlich auf dem eigenen Rechner.
 
-Version 1.0 (14.11.2026)
+Version 1.1 (14.11.2026) — Fenstergröße/-position und Spaltenbreiten der
+Trefferliste werden benutzerspezifisch gemerkt (je Konto:
+~/.config/ti-adresssuche/fenster.json).
 """
 import base64
 import configparser
+import json
 import os
+import re
 import subprocess
 import tkinter as tk
 from tkinter import ttk
@@ -205,6 +209,45 @@ def mails_von(e):
     return []
 
 
+# ---------- Fensterzustand (benutzerspezifisch) -----------------------------
+# Fenstergröße/-position und Spaltenbreiten der Trefferliste werden je
+# Benutzerkonto gemerkt (Linux: ~/.config/ti-adresssuche/fenster.json,
+# Windows: %APPDATA%\TI-Adresssuche\fenster.json). Die Installation selbst
+# darf geteilt liegen — der Zustand ist bewusst kontenlokal.
+
+SPALTEN_BREITEN_DEFAULT = {"name": 180, "org": 160, "ort": 90, "plz": 50,
+                           "str": 140, "mail": 240}
+
+
+def _zustand_datei():
+    if os.name == "nt":
+        basis = os.environ.get("APPDATA") or os.path.expanduser("~")
+        return os.path.join(basis, "TI-Adresssuche", "fenster.json")
+    basis = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
+    return os.path.join(basis, "ti-adresssuche", "fenster.json")
+
+
+def lade_fensterzustand():
+    try:
+        with open(_zustand_datei(), "r", encoding="utf-8") as f:
+            daten = json.load(f)
+        return daten if isinstance(daten, dict) else None
+    except Exception:
+        return None
+
+
+def speichere_fensterzustand(daten):
+    try:
+        pfad = _zustand_datei()
+        os.makedirs(os.path.dirname(pfad), exist_ok=True)
+        tmp = pfad + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(daten, f)
+        os.replace(tmp, pfad)
+    except Exception:
+        pass  # Zustand ist Komfort — niemals die Anwendung blockieren
+
+
 class Suche(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -234,9 +277,19 @@ class Suche(tk.Tk):
         self.baum = ttk.Treeview(self, columns=spalten, show="headings")
         for s, k in zip(spalten, kopftext):
             self.baum.heading(s, text=k)
-        self.baum.column("name", width=180); self.baum.column("org", width=160)
-        self.baum.column("ort", width=90); self.baum.column("plz", width=50)
-        self.baum.column("str", width=140); self.baum.column("mail", width=240)
+        for s, w in SPALTEN_BREITEN_DEFAULT.items():
+            self.baum.column(s, width=w)
+        zustand = lade_fensterzustand()
+        if isinstance(zustand, dict):
+            geo = zustand.get("fenster")
+            if isinstance(geo, str) and re.match(r"^\d+x\d+[+-]\d+[+-]\d+$", geo):
+                self.geometry(geo)
+            breiten = zustand.get("spalten")
+            if isinstance(breiten, dict):
+                for s in spalten:
+                    w = breiten.get(s)
+                    if isinstance(w, int) and w > 20:
+                        self.baum.column(s, width=w)
         self.baum.pack(fill="both", expand=True, padx=8, pady=4)
         fuss = ttk.Frame(self); fuss.pack(fill="x", padx=8, pady=4)
         ttk.Button(fuss, text="KIM-Adresse(n) des Eintrags kopieren",
@@ -244,10 +297,22 @@ class Suche(tk.Tk):
         self.info = ttk.Label(fuss, text="Doppelklick auf einen Treffer zeigt alle LDAP-Infos des Eintrags")
         self.info.pack(side="left", padx=10)
         self.baum.bind("<Double-1>", self.detail)
+        self.protocol("WM_DELETE_WINDOW", self._beende)
         self.treffer = []
         if CONFIG_FEHLER:
             self.status.config(text="Konfigurationsfehler — siehe Konsole/README")
             print("FEHLER:", CONFIG_FEHLER)
+
+    def _beende(self):
+        try:
+            speichere_fensterzustand({
+                "fenster": self.geometry(),
+                "spalten": {s: self.baum.column(s, "width")
+                            for s in SPALTEN_BREITEN_DEFAULT},
+            })
+        except Exception:
+            pass
+        self.destroy()
 
     def suche(self):
         name, wert = self.fach.get(), self.oid.get().strip()
