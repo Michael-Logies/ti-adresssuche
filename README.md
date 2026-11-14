@@ -177,7 +177,9 @@ Für eine gemeinsame Installation:
   unsortiert in der Antwort-Reihenfolge des Verzeichnisdienstes. Nachname
   und Vorname stehen in getrennten, einzeln sortierbaren Spalten (aus dem
   Anzeigenamen abgeleitet — der Verzeichnisdienst befüllt strukturierte
-  Namensattribute nicht zuverlässig).
+  Namensattribute nicht zuverlässig); Doktor-/Professoren-Titel stehen
+  vereinheitlicht am Ende des Vornamen-Feldes, Prof. vor Dr. und mehrfache
+  Dr. direkt hintereinander (z. B. „Hans Maier, Prof. Dr. Dr. med.“).
 - „KIM-Adresse(n) kopieren" setzt die Adresse(n) des markierten Eintrags
   in die Zwischenablage.
 - **Fenstergröße/-position und Spaltenbreiten** werden benutzerspezifisch

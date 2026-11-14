@@ -15,12 +15,12 @@ Alle Verbindungsdaten stehen in config.ini (vorher aus config.example.ini
 erzeugen). Diese Datei enthält KEINE Zugangsdaten — das Zertifikat bleibt
 ausschließlich auf dem eigenen Rechner.
 
-Version 1.3 (14.11.2026) — Trefferliste mit getrennten Spalten Nachname und
-Vorname (aus dem Anzeigenamen abgeleitet; der VZD befüllt sn/givenName
-nicht strukturiert), beide wie alle Spalten per Spaltenkopf-Klick
-sortierbar (erneuter Klick dreht die Richtung); Fenstergröße/-position und
-Spaltenbreiten werden benutzerspezifisch gemerkt (je Konto:
-~/.config/ti-adresssuche/fenster.json).
+Version 1.4 (14.11.2026) — Doktor-/Professoren-Titel werden vereinheitlicht
+an das ENDE des Vornamen-Feldes gestellt, in der Reihenfolge Prof. vor
+Dr., mehrfache Dr. direkt hintereinander (egal, wo das VZD sie platziert);
+getrennte Spalten Nachname/Vorname, alle Spalten per Spaltenkopf-Klick
+sortierbar; Fenstergröße/-position und Spaltenbreiten werden
+benutzerspezifisch gemerkt (je Konto: ~/.config/ti-adresssuche/fenster.json).
 """
 import base64
 import configparser
@@ -212,17 +212,65 @@ def mails_von(e):
     return []
 
 
+_TITEL_FORTS = {"med", "dent", "rer", "nat", "phil", "jur", "habil", "mult",
+                "sc", "paed", "theol", "ing", "vet", "h.c", "hc"}
+
+
+def _titel_gruppe(tok):
+    """'prof' oder 'dr' für Titel-Start-Wörter (Prof./Dr./Dres. samt
+    Schreibweisen wie 'Dr.med.'), sonst None."""
+    k = tok.casefold().rstrip(".")
+    if k == "prof" or k.startswith("prof."):
+        return "prof"
+    if k in ("dr", "dres") or k.startswith("dr."):
+        return "dr"
+    return None
+
+
+def _ist_titel_forts(tok):
+    return tok.casefold().rstrip(".") in _TITEL_FORTS
+
+
 def namen_von(e):
-    """(Nachname, Vorname) aus dem Anzeigenamen — der VZD befüllt
-    sn/givenName nicht strukturiert (sn = ganzer Name, givenName = '-')."""
+    """(Nachname, Vorname) aus dem Anzeigenamen; Titel (Dr./Prof. samt
+    Zusätzen wie med./dent./h.c.) wandern vereinheitlicht an das ENDE des
+    Vornamen-Feldes — Reihenfolge im Titelblock: Prof. vor Dr., mehrfache
+    Dr. direkt hintereinander (z. B. 'Hans Maier, Prof. Dr. Dr. med.'),
+    egal wo das VZD sie platziert. sn/givenName sind unstrukturiert
+    befüllt (sn = ganzer Name, givenName = '-') und werden ignoriert."""
     anzeige = (hole(e, "displayName") or hole(e, "cn") or "").strip()
     if not anzeige:
         return "", ""
+    titel_am_ende = []
     if "," in anzeige:  # Schreibweise „Nachname, Vorname"
-        nach, vor = anzeige.split(",", 1)
-        return nach.strip(), vor.strip()
-    teile = anzeige.rsplit(" ", 1)
-    return (teile[1], teile[0]) if len(teile) == 2 else (anzeige, "")
+        nach, rest = anzeige.split(",", 1)
+        nach = nach.strip()
+    else:
+        tokens = anzeige.split()
+        i = len(tokens) - 1
+        # „Müller Dr. med.": Titel-Wörter hinter dem Nachnamen zurückspülen
+        while i > 0 and (_titel_gruppe(tokens[i]) or _ist_titel_forts(tokens[i])):
+            titel_am_ende.insert(0, tokens[i])
+            i -= 1
+        nach = tokens[i]
+        rest = " ".join(tokens[:i])
+    teile, titel_prof, titel_dr = [], [], []
+    gruppe = None
+    for tok in list(rest.split()) + titel_am_ende:
+        g = _titel_gruppe(tok)
+        if g:
+            gruppe = g
+            (titel_prof if g == "prof" else titel_dr).append(tok)
+        elif gruppe and _ist_titel_forts(tok):
+            (titel_prof if gruppe == "prof" else titel_dr).append(tok)
+        else:
+            teile.append(tok)
+            gruppe = None
+    vor = " ".join(teile)
+    titel_block = " ".join(titel_prof + titel_dr)
+    if titel_block:
+        vor = (vor + ", " if vor else "") + titel_block
+    return nach, vor
 
 
 # ---------- Fensterzustand (benutzerspezifisch) -----------------------------
