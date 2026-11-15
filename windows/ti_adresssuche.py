@@ -205,6 +205,9 @@ class LdapVerbindung:
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
+        # TLS 1.2+ explizit: TI-Konnektoren verlangen das Minimum; verhindert,
+        # daß TLS 1.0/1.1 aushandelbar bleiben (CodeQL py/insecure-protocol).
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         ctx.load_cert_chain(CERT, KEY)
         raw = socket.create_connection((HOST, PORT), timeout=30)
         self.sock = ctx.wrap_socket(raw, server_hostname=HOST)
